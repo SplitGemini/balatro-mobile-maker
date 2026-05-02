@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using System.IO;
 using System.Net;
 using static balatro_mobile_maker.Program;
+using static balatro_mobile_maker.Platform;
 using System.Diagnostics;
 using System.IO.Compression;
 using ICSharpCode.SharpZipLib.Zip;
@@ -213,6 +214,114 @@ internal class Tools
 
         //Return the process
         return commandLineProcess;
+    }
+
+    /// <summary>
+    /// Runs a command and returns its standard output as a string.
+    /// </summary>
+    public static string RunCommandWithOutput(string command, string args)
+    {
+        Process p = new Process();
+        p.StartInfo.FileName = command;
+        p.StartInfo.Arguments = args;
+        p.StartInfo.CreateNoWindow = true;
+        p.StartInfo.UseShellExecute = false;
+        p.StartInfo.RedirectStandardOutput = true;
+        p.StartInfo.RedirectStandardError = true;
+
+        StringBuilder output = new StringBuilder();
+        p.OutputDataReceived += (sender, e) =>
+        {
+            if (e.Data != null)
+                output.AppendLine(e.Data);
+        };
+
+        p.Start();
+        p.BeginOutputReadLine();
+        p.BeginErrorReadLine();
+        p.WaitForExit();
+
+        return output.ToString();
+    }
+
+    /// <summary>
+    /// Runs an ADB command and returns its standard output.
+    /// </summary>
+    public static string RunADBWithOutput(string args)
+    {
+        if (isWindows)
+            return RunCommandWithOutput("platform-tools\\platform-tools\\adb.exe", args);
+
+        // TODO: OSX and Linux implementations
+        return "";
+    }
+
+    /// <summary>
+    /// Copies a directory recursively to a destination, excluding specific relative sub-paths.
+    /// </summary>
+    public static void CopyDirectoryExcluding(string sourceDir, string destDir, string[] excludePaths, string currentRelativePath = "")
+    {
+        Directory.CreateDirectory(destDir);
+
+        foreach (string file in Directory.GetFiles(sourceDir))
+        {
+            string fileName = Path.GetFileName(file);
+            string fileRelativePath = string.IsNullOrEmpty(currentRelativePath)
+                ? fileName
+                : currentRelativePath + "/" + fileName;
+
+            bool excluded = false;
+            foreach (string exclude in excludePaths)
+            {
+                if (fileRelativePath.Equals(exclude, StringComparison.OrdinalIgnoreCase))
+                {
+                    excluded = true;
+                    break;
+                }
+            }
+
+            if (!excluded)
+            {
+                string destFile = Path.Combine(destDir, fileName);
+                File.Copy(file, destFile, true);
+            }
+        }
+
+        foreach (string subDir in Directory.GetDirectories(sourceDir))
+        {
+            string dirName = Path.GetFileName(subDir);
+            string dirRelativePath = string.IsNullOrEmpty(currentRelativePath)
+                ? dirName
+                : currentRelativePath + "/" + dirName;
+
+            bool excluded = false;
+            foreach (string exclude in excludePaths)
+            {
+                if (dirRelativePath.Equals(exclude, StringComparison.OrdinalIgnoreCase))
+                {
+                    excluded = true;
+                    break;
+                }
+            }
+
+            if (!excluded)
+            {
+                string destSubDir = Path.Combine(destDir, dirName);
+                CopyDirectoryExcluding(subDir, destSubDir, excludePaths, dirRelativePath);
+            }
+        }
+    }
+
+    /// <summary>
+    /// Deletes specific relative sub-paths within a base directory if they exist.
+    /// </summary>
+    public static void DeleteExcludedPaths(string baseDir, string[] excludePaths)
+    {
+        foreach (string excludePath in excludePaths)
+        {
+            string fullPath = Path.Combine(baseDir, excludePath.Replace('/', Path.DirectorySeparatorChar));
+            tryDelete(fullPath);
+        }
     }
 
     /// <summary>

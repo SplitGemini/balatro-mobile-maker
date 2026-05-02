@@ -16,6 +16,7 @@ internal static class Constants
     //ADB
     public const string PlatformToolsLink = "https://dl.google.com/android/repository/platform-tools-latest-windows.zip";
     public const string LibLovelyAndroidLink = "https://github.com/SplitGemini/lovely-injector/releases/latest/download/lovely-aarch64-linux-android.tar.gz";
+    public const string AndroidPackageName = "com.unofficial.balatro";
 
     //OpenJDK Download Links
     //TODO: Find JDK links for all platforms

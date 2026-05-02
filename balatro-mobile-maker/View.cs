@@ -1,10 +1,12 @@
 ﻿using System;
 using System.IO;
 using System.Diagnostics;
+using System.Linq;
 using System.Net;
 using System.Threading;
 using System.Formats.Tar;
 using System.IO.Compression;
+using System.Text.RegularExpressions;
 using static balatro_mobile_maker.Constants;
 using static balatro_mobile_maker.Tools;
 using static balatro_mobile_maker.Program;
@@ -25,6 +27,9 @@ internal class View
     private static bool _cleaup;
 
     static bool gameProvided;
+
+    private static readonly string androidSavePath = "/storage/emulated/0/Documents/Balatro/game/save";
+    private static readonly string[] excludePaths = ["Mods/lovely/log", "Mods/lovely/dump", "Mods/lovely/game-dump"];
 
     /// <summary>
     /// Start CLI operation.
@@ -187,7 +192,7 @@ internal class View
                         string permissionBlock = "<uses-permission android:name=\"android.permission.READ_EXTERNAL_STORAGE\"/>\n" +
                                                  "<uses-permission android:name=\"android.permission.WRITE_EXTERNAL_STORAGE\"/>\n" +
                                                  "<uses-permission android:name=\"android.permission.MANAGE_EXTERNAL_STORAGE\"/>\n" +
-                                                 "<application android:requestLegacyExternalStorage=\"true\"";
+                                                 "<application android:requestLegacyExternalStorage=\"true\" android:preserveLegacyExternalStorage=\"true\"";
 
                         manifestContent = manifestContent.Replace("<application", permissionBlock);
 
@@ -205,6 +210,7 @@ internal class View
 
                         File.WriteAllText(manifestPath, manifestContent);
                     }
+                    PatchAndroidTargetSdkForExternalStorage();
                     fileCopy("Balatro-APK-Patch/res/drawable-hdpi/love.png", "balatro-apk/res/drawable-hdpi/love.png");
                     fileCopy("Balatro-APK-Patch/res/drawable-mdpi/love.png", "balatro-apk/res/drawable-mdpi/love.png");
                     fileCopy("Balatro-APK-Patch/res/drawable-xhdpi/love.png", "balatro-apk/res/drawable-xhdpi/love.png");
@@ -322,7 +328,16 @@ internal class View
                 Log("Attempting to install. If prompted, please allow the USB Debugging connection on your Android device.");
 
                 useTool(ProcessTools.ADB, "install balatro.apk");
+                if (_addLovely)
+                {
+                    GrantLovelyExternalStorageAccess();
+                }
                 useTool(ProcessTools.ADB, "kill-server");
+            }
+            else if (fileExists("balatro.apk") && _addLovely)
+            {
+                Log("Lovely mods need external storage access on Android 11+.");
+                Log("After installing, run: adb shell appops set " + AndroidPackageName + " MANAGE_EXTERNAL_STORAGE allow");
             }
             #endregion
 
@@ -336,14 +351,38 @@ internal class View
 
                 Log("Attempting to transfer saves. If prompted, please allow the USB Debugging connection on your Android device.");
 
-                string androidSavePath = "/storage/emulated/0/Documents/Balatro/game/save";
-
                 // Backup existing save on Android device before overwriting
                 Log("Backing up existing save files on Android device...");
-                useTool(ProcessTools.ADB, "shell rm -rf " + androidSavePath + "BACKUP");
-                useTool(ProcessTools.ADB, "shell cp -r " + androidSavePath + " " + androidSavePath + "BACKUP");
+                string dateSuffix = DateTime.Now.ToString("yyyyMMdd");
+                string backupPath = androidSavePath + "-backup-" + dateSuffix;
+                useTool(ProcessTools.ADB, "shell rm -rf " + backupPath);
+                useTool(ProcessTools.ADB, "shell cp -r " + androidSavePath + " " + backupPath);
 
-                useTool(ProcessTools.ADB, "push \"" + Platform.getGameSaveLocation() + "\\.\" " + androidSavePath);
+                // Prune old backups, keep the most recent 10
+                string adbOutput = Tools.RunADBWithOutput("shell ls -1 -d " + androidSavePath + "-backup-* 2>/dev/null");
+                if (!string.IsNullOrWhiteSpace(adbOutput))
+                {
+                    var backups = adbOutput.Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries)
+                        .Select(b => b.Trim())
+                        .Where(b => !string.IsNullOrEmpty(b))
+                        .OrderBy(b => b)
+                        .ToList();
+
+                    while (backups.Count > 10)
+                    {
+                        string oldBackup = backups[0];
+                        useTool(ProcessTools.ADB, "shell rm -rf \"" + oldBackup + "\"");
+                        backups.RemoveAt(0);
+                    }
+                }
+
+                // Push from a temporary copy that excludes lovely debug folders
+                string tempSaveDir = Path.Combine(Path.GetTempPath(), "balatro_save_" + Guid.NewGuid().ToString("N"));
+                Directory.CreateDirectory(tempSaveDir);
+                Tools.CopyDirectoryExcluding(Platform.getGameSaveLocation(), tempSaveDir, excludePaths);
+                useTool(ProcessTools.ADB, "push \"" + tempSaveDir + "\\.\" " + androidSavePath);
+                Tools.tryDelete(tempSaveDir);
+
                 useTool(ProcessTools.ADB, "shell am force-stop com.unofficial.balatro");
                 useTool(ProcessTools.ADB, "kill-server");
             }
@@ -358,17 +397,30 @@ internal class View
                     PrepareAndroidPlatformTools();
 
                     Log("Backing up your files...");
-                    if (!directoryExists(Platform.getGameSaveLocation() + "BACKUP"))
-                        System.IO.Directory.CreateDirectory(Platform.getGameSaveLocation() + "BACKUP/");
-                    //TODO: No xcopy
-                    RunCommand("xcopy", "\"" + Platform.getGameSaveLocation() + "\" \"" + Platform.getGameSaveLocation() + "BACKUP\\\" /E /H /Y /V");
-                    tryDelete(Platform.getGameSaveLocation());
-                    System.IO.Directory.CreateDirectory(Platform.getGameSaveLocation());
+                    string saveLocation = Platform.getGameSaveLocation();
+                    string dateSuffix = DateTime.Now.ToString("yyyyMMdd");
+                    string localBackupPath = saveLocation + "-backup-" + dateSuffix;
+                    System.IO.Directory.CreateDirectory(localBackupPath);
+                    Tools.CopyDirectoryExcluding(saveLocation, localBackupPath, excludePaths);
+
+                    // Prune old local backups, keep the most recent 10
+                    string saveParent = System.IO.Directory.GetParent(saveLocation)?.FullName ?? ".";
+                    var localBackups = System.IO.Directory.GetDirectories(saveParent, "Balatro-backup-*")
+                        .OrderBy(d => d)
+                        .ToList();
+                    while (localBackups.Count > 10)
+                    {
+                        Tools.tryDelete(localBackups[0]);
+                        localBackups.RemoveAt(0);
+                    }
+
+                    tryDelete(saveLocation);
+                    System.IO.Directory.CreateDirectory(saveLocation);
 
                     Log("Attempting to pull save files from Android device.");
 
-                    string androidSavePath = "/storage/emulated/0/Documents/Balatro/game/save";
-                    useTool(ProcessTools.ADB, "pull " + androidSavePath + "/. \"" + Platform.getGameSaveLocation() + "\"");
+                    useTool(ProcessTools.ADB, "pull " + androidSavePath + "/. \"" + saveLocation + "\"");
+                    Tools.DeleteExcludedPaths(saveLocation, excludePaths);
 
                     useTool(ProcessTools.ADB, "kill-server");
                 }
@@ -435,5 +487,38 @@ internal class View
         //Prompt user
         while (!AskQuestion("Is your Android device connected to the host with USB Debugging enabled?"))
             Log("Please enable USB Debugging on your Android device, and connect it to the host.");
+    }
+
+    static void PatchAndroidTargetSdkForExternalStorage()
+    {
+        const string apktoolPath = "balatro-apk/apktool.yml";
+        if (!File.Exists(apktoolPath))
+        {
+            Log("apktool.yml not found; unable to lower targetSdkVersion for legacy external storage.");
+            return;
+        }
+
+        string apktool = File.ReadAllText(apktoolPath);
+        string patched = Regex.Replace(
+            apktool,
+            @"(?m)^(\s*targetSdkVersion:\s*)'?\d+'?\s*$",
+            "$1'29'");
+
+        if (patched == apktool)
+        {
+            Log("targetSdkVersion not found in apktool.yml; external storage may require manual all-files access.");
+            return;
+        }
+
+        File.WriteAllText(apktoolPath, patched);
+        Log("Set Android targetSdkVersion to 29 for legacy external storage access.");
+    }
+
+    void GrantLovelyExternalStorageAccess()
+    {
+        Log("Granting Lovely external storage access...");
+        useTool(ProcessTools.ADB, "shell appops set " + AndroidPackageName + " MANAGE_EXTERNAL_STORAGE allow");
+        useTool(ProcessTools.ADB, "shell appops set " + AndroidPackageName + " READ_EXTERNAL_STORAGE allow");
+        useTool(ProcessTools.ADB, "shell appops set " + AndroidPackageName + " WRITE_EXTERNAL_STORAGE allow");
     }
 }
