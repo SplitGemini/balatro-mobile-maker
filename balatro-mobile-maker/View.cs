@@ -3,6 +3,8 @@ using System.IO;
 using System.Diagnostics;
 using System.Net;
 using System.Threading;
+using System.Formats.Tar;
+using System.IO.Compression;
 using static balatro_mobile_maker.Constants;
 using static balatro_mobile_maker.Tools;
 using static balatro_mobile_maker.Program;
@@ -18,6 +20,7 @@ internal class View
 
     private bool _androidBuild;
     private bool _iosBuild;
+    private bool _addLovely;
 
     private static bool _cleaup;
 
@@ -38,6 +41,10 @@ internal class View
         if (!(fileExists("balatro.apk") || fileExists("balatro.ipa")) || AskQuestion("A previous build was found... Would you like to build again?"))
         {
             _androidBuild = AskQuestion("Would you like to build for Android?");
+            if(_androidBuild)
+            {
+                _addLovely = AskQuestion("Would you like to add lovely injector?");
+            }
             _iosBuild = AskQuestion("Would you like to build for iOS (experimental)?");
 
 
@@ -55,7 +62,8 @@ internal class View
                         new Thread(() => { TryDownloadFile("APKTool", ApktoolLink, "apktool.jar"); }),
                         new Thread(() => { TryDownloadFile("uber-apk-signer", UberapktoolLink, "uber-apk-signer.jar"); }),
                         new Thread(() => { TryDownloadFile("Balatro-APK-Patch", BalatroApkPatchLink, "Balatro-APK-Patch.zip"); }),
-                        new Thread(() => { TryDownloadFile("Love2D APK", Love2dApkLink, "love-11.5-android-embed.apk"); })
+                        new Thread(() => { TryDownloadFile("Love2D APK", Love2dApkLink, "love-11.5-android-embed.apk"); }),
+                        new Thread(() => { TryDownloadFile("Lovely Injector (Android)", LibLovelyAndroidLink, "lovely-aarch64-linux-android.tar.gz"); })
                     ];
 
                     //Start all the downloads
@@ -138,7 +146,7 @@ internal class View
                     }
 
                     //Unpack Love2D APK
-                    useTool(ProcessTools.Java, "-jar -Xmx1G -Duser.language=en -Dfile.encoding=UTF8 -Djdk.util.zip.disableZip64ExtraFieldValidation=true -Djdk.nio.zipfs.allowDotZipEntry=true \"apktool.jar\" d -s -o balatro-apk love-11.5-android-embed.apk");
+                    useTool(ProcessTools.Java, "-jar -Xmx1G -Duser.language=en -Dfile.encoding=UTF8 -Djdk.util.zip.disableZip64ExtraFieldValidation=true -Djdk.nio.zipfs.allowDotZipEntry=true \"apktool.jar\" d -o balatro-apk love-11.5-android-embed.apk");
 
                     //Check for failure
                     if (!directoryExists("balatro-apk"))
@@ -191,6 +199,22 @@ internal class View
                     fileCopy("Balatro-APK-Patch/res/drawable-xxxhdpi/love.png", "balatro-apk/res/drawable-xxxhdpi/love.png");
                     #endregion
                 }
+
+                #region Lovely injector
+
+                if(_addLovely)
+                {
+                    var smali = File.ReadAllText("balatro-apk/smali/org/love2d/android/GameActivity.smali");
+                    // Insert a loadLibrary call
+                    smali = smali.Replace("invoke-direct {p0}, Lorg/libsdl/app/SDLActivity;-><init>()V", "const-string v0, \"lovely\"\n    invoke-static {v0}, Ljava/lang/System;->loadLibrary(Ljava/lang/String;)V\n    invoke-direct {p0}, Lorg/libsdl/app/SDLActivity;-><init>()V");
+                    File.WriteAllText("balatro-apk/smali/org/love2d/android/GameActivity.smali", smali);
+                    Directory.CreateDirectory("lovely-aarch64-linux-android");
+                    var stream = new GZipStream(File.OpenRead("lovely-aarch64-linux-android.tar.gz"), CompressionMode.Decompress);
+                    TarFile.ExtractToDirectory(stream, "lovely-aarch64-linux-android", true);
+                    fileCopy("lovely-aarch64-linux-android/liblovely.so", "balatro-apk/lib/arm64-v8a/liblovely.so");
+                }
+
+                #endregion
 
                 if (_iosBuild)
                 {
@@ -390,6 +414,8 @@ internal class View
             tryDelete("ios.py");
             tryDelete("balatro.zip");
             tryDelete("game.love");
+            tryDelete("lovely-aarch64-linux-android.tar.gz");
+            tryDelete("lovely-aarch64-linux-android");
 
             tryDelete("platform-tools");
             tryDelete("jdk-21.0.3+9");
