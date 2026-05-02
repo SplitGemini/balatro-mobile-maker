@@ -4,13 +4,13 @@ The goal of this project is to allow *Balatro* fans to play *Balatro* on their m
 
 Balatro Mobile Maker also supports automatically transferring your saves back and forth between your *Steam* copy of the game and your mobile device (save transfer features only officially available on **Windows** and **Android**, for now).
 
-> Keep in mind that Balatro Mobile Maker is still in beta! Please report any bugs you encounter in the [issues section](https://github.com/blake502/balatro-mobile-maker/issues). If you encounter bugs with the latest release, try the previous release.
+> Keep in mind that Balatro Mobile Maker is still in beta! Please report any bugs you encounter in the [issues section](https://github.com/SplitGemini/balatro-mobile-maker/issues). If you encounter bugs with the latest release, try the previous release.
 
 ## Quick Start Guide
 
 Please review the **Notes** section before you begin.
 
-1. Download or compile [**balatro-mobile-maker**](https://github.com/blake502/balatro-mobile-maker/releases).
+1. Download or compile [**balatro-mobile-maker**](https://github.com/SplitGemini/balatro-mobile-maker/releases).
 2. Run **balatro-mobile-maker**.
 3. Follow the prompts to apply optional patches. If you're unsure, always select **Y**.
 
@@ -20,7 +20,7 @@ Please review the **Notes** section before you begin.
 
 ### For iOS
 - Sideload **balatro.ipa** using [AltStore](https://altstore.io/).
-- Optionally, [copy your saves to your iOS device](https://github.com/blake502/balatro-mobile-maker/issues/64#issuecomment-2094660508).
+- Optionally, [copy your saves to your iOS device](https://github.com/SplitGemini/balatro-mobile-maker/issues/64#issuecomment-2094660508).
 
 ## Optional Patches
 
@@ -66,15 +66,15 @@ After installing the APK, you must manually grant all-files access:
 - [APK Tool](https://apktool.org/)
 - [uber-apk-signer](https://github.com/patrickfav/uber-apk-signer/)
 - [love-11.5-android-embed.apk](https://github.com/love2d/love-android/)
-- [Balatro-APK-Patch](https://github.com/blake502/balatro-mobile-maker/releases/tag/Additional-Tools-1.0)
+- [Balatro-APK-Patch](https://github.com/SplitGemini/balatro-mobile-maker/releases/tag/Additional-Tools-1.0)
 - [Android Developer Bridge](https://developer.android.com/tools/adb) (optional, for auto-install / save transfer)
 
 ### iOS Dependencies
-- [Balatro-IPA-Base](https://github.com/blake502/balatro-mobile-maker/releases/tag/Additional-Tools-1.0)
+- [Balatro-IPA-Base](https://github.com/SplitGemini/balatro-mobile-maker/releases/tag/Additional-Tools-1.0)
 
 ## Recognition (in no particular order)
 
-- [Every contributor](https://github.com/blake502/balatro-mobile-maker/graphs/contributors)
+- [Every contributor](https://github.com/SplitGemini/balatro-mobile-maker/graphs/contributors)
 - Developers of [uber-apk-signer](https://github.com/patrickfav/uber-apk-signer)
 - Developers of [LÖVE](https://love2d.org/)
 - Developers of [7-Zip](https://www.7-zip.org/)
