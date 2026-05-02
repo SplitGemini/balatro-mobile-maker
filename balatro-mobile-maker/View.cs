@@ -23,6 +23,7 @@ internal class View
     private bool _androidBuild;
     private bool _iosBuild;
     private bool _addLovely;
+    private string _androidPackageName = AndroidPackageName;
 
     private static bool _cleaup;
 
@@ -49,6 +50,20 @@ internal class View
             if(_androidBuild)
             {
                 _addLovely = AskQuestion("Would you like to add lovely injector?");
+                if (AskQuestion("Would you like to use a custom package name? (Default: " + AndroidPackageName + ")"))
+                {
+                    Log("Enter custom package name (e.g. com.example.balatro):");
+                    string customName = Console.ReadLine()?.Trim();
+                    if (!string.IsNullOrWhiteSpace(customName))
+                    {
+                        _androidPackageName = customName;
+                        Log("Using custom package name: " + _androidPackageName);
+                    }
+                    else
+                    {
+                        Log("Invalid package name entered. Using default: " + AndroidPackageName);
+                    }
+                }
             }
             _iosBuild = AskQuestion("Would you like to build for iOS (experimental)?");
 
@@ -208,6 +223,12 @@ internal class View
                                 "android:versionName=\"" + version + "\"");
                         }
 
+                        // Ensure package name matches selected package name
+                        manifestContent = System.Text.RegularExpressions.Regex.Replace(
+                            manifestContent,
+                            @"package=""[^""]*""",
+                            "package=\"" + _androidPackageName + "\"");
+
                         File.WriteAllText(manifestPath, manifestContent);
                     }
                     PatchAndroidTargetSdkForExternalStorage();
@@ -337,7 +358,7 @@ internal class View
             else if (fileExists("balatro.apk") && _addLovely)
             {
                 Log("Lovely mods need external storage access on Android 11+.");
-                Log("After installing, run: adb shell appops set " + AndroidPackageName + " MANAGE_EXTERNAL_STORAGE allow");
+                Log("After installing, run: adb shell appops set " + _androidPackageName + " MANAGE_EXTERNAL_STORAGE allow");
             }
             #endregion
 
@@ -383,7 +404,7 @@ internal class View
                 useTool(ProcessTools.ADB, "push \"" + tempSaveDir + "\\.\" " + androidSavePath);
                 Tools.tryDelete(tempSaveDir);
 
-                useTool(ProcessTools.ADB, "shell am force-stop com.unofficial.balatro");
+                useTool(ProcessTools.ADB, "shell am force-stop " + _androidPackageName);
                 useTool(ProcessTools.ADB, "kill-server");
             }
             else
@@ -517,8 +538,8 @@ internal class View
     void GrantLovelyExternalStorageAccess()
     {
         Log("Granting Lovely external storage access...");
-        useTool(ProcessTools.ADB, "shell appops set " + AndroidPackageName + " MANAGE_EXTERNAL_STORAGE allow");
-        useTool(ProcessTools.ADB, "shell appops set " + AndroidPackageName + " READ_EXTERNAL_STORAGE allow");
-        useTool(ProcessTools.ADB, "shell appops set " + AndroidPackageName + " WRITE_EXTERNAL_STORAGE allow");
+        useTool(ProcessTools.ADB, "shell appops set " + _androidPackageName + " MANAGE_EXTERNAL_STORAGE allow");
+        useTool(ProcessTools.ADB, "shell appops set " + _androidPackageName + " READ_EXTERNAL_STORAGE allow");
+        useTool(ProcessTools.ADB, "shell appops set " + _androidPackageName + " WRITE_EXTERNAL_STORAGE allow");
     }
 }
