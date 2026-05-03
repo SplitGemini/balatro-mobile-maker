@@ -1,5 +1,7 @@
 # Balatro Mobile Maker
 
+[中文文档](README_zh-CN.md)
+
 The goal of this project is to allow *Balatro* fans to play *Balatro* on their mobile devices. This project provides a **NON-PIRACY** avenue for players to do so, by converting their *Steam* copy of *Balatro* to a mobile app.
 
 Balatro Mobile Maker also supports automatically transferring your saves back and forth between your *Steam* copy of the game and your mobile device (save transfer features only officially available on **Windows** and **Android**, for now).
@@ -112,9 +114,9 @@ The **External Storage** patch is automatically applied. The game reads from and
 - [APK Tool](https://apktool.org/)
 - [uber-apk-signer](https://github.com/patrickfav/uber-apk-signer/)
 - [love-android-embed.apk](https://github.com/SplitGemini/love-android/)
-- [Balatro-APK-Patch](https://github.com/SplitGemini/balatro-mobile-maker/releases/tag/Additional-Tools-1.0)
+- [Balatro-APK-Patch](https://github.com/SplitGemini/balatro-mobile-maker/releases/tag/tools)
 - [Android Developer Bridge](https://developer.android.com/tools/adb) (optional, for auto-install / save transfer)
-- [Lovely Injector (Android)](https://github.com/SplitGemini/lovely-android/)
+- [Lovely Injector (Android)](https://github.com/SplitGemini/lovely-injector)
 
 ## Recognition (in no particular order)
 
