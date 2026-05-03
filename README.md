@@ -6,55 +6,92 @@ Balatro Mobile Maker also supports automatically transferring your saves back an
 
 > Keep in mind that Balatro Mobile Maker is still in beta! Please report any bugs you encounter in the [issues section](https://github.com/SplitGemini/balatro-mobile-maker/issues). If you encounter bugs with the latest release, try the previous release.
 
-## Quick Start Guide
+## Setup & Usage
 
-Please review the **Notes** section before you begin.
+### 1. Build the APK
 
-1. Download or compile [**balatro-mobile-maker**](https://github.com/SplitGemini/balatro-mobile-maker/releases).
-2. Run **balatro-mobile-maker**.
-3. Follow the prompts to apply optional patches. If you're unsure, always select **Y**.
+1. **Download** the latest release of [**balatro-mobile-maker**](https://github.com/SplitGemini/balatro-mobile-maker/releases) for your OS (Windows/Linux/macOS).
+2. **Extract** the downloaded archive to a folder of your choice.
+3. **Place your game file** — copy `Balatro.exe` (from Steam) or `Game.love` into the same folder as `balatro-mobile-maker`.
+   - The tool can auto-detect `Balatro.exe` from the default Steam directory, but manual placement is more reliable.
+4. **Run** `balatro-mobile-maker` and follow the CLI prompts:
+   - Choose whether to clean up temporary files after build.
+   - Confirm Android build.
+   - Choose whether to inject `lovely` (recommended if you plan to use mods).
+   - Confirm external storage patch (auto-applied).
+5. Wait for the build to complete. The output is a signed **`balatro.apk`** in the same folder.
 
-### For Android
-- Copy the resulting **balatro.apk** to your Android device, or allow the program to automatically install using [USB Debugging](https://developer.android.com/studio/debug/dev-options).
-- Optionally, allow the program to automatically transfer your saves from your *Steam* copy of *Balatro* using [USB Debugging](https://developer.android.com/studio/debug/dev-options).
+> The External Storage patch is applied automatically. Saves and mods are stored in `/storage/emulated/0/Documents/Balatro/game/save/`.
 
-### For iOS
-- Sideload **balatro.ipa** using [AltStore](https://altstore.io/).
-- Optionally, [copy your saves to your iOS device](https://github.com/SplitGemini/balatro-mobile-maker/issues/64#issuecomment-2094660508).
+### 2. Install on Android
 
-## Optional Patches
+**Option A: Manual install**
 
-| Patch | Description |
-|-------|-------------|
-| **FPS Cap** | Caps FPS to a desired number (or to the device's native refresh rate — recommended for battery performance). |
-| **Landscape Orientation** | Locks the game to landscape orientation (recommended, since portrait orientation does not behave very well). |
-| **High DPI** | Enables [High DPI graphics mode in Love](https://love2d.org/wiki/love.window.setMode) (recommended for iOS). |
-| **CRT Shader Disable** | Disables the CRT shader (recommended for Pixel and some other devices). |
-| **External Storage** | Allows saving to `/storage/emulated/0/Documents/Balatro` so saves and mods can be managed outside the app sandbox (**recommended for modding**). |
+1. Copy **`balatro.apk`** to your Android device (via USB, cloud storage, etc.).
+2. On Android, open the file manager, locate the APK, and tap to install.
+3. If prompted, allow installation from this source.
 
-## Mods Support
+**Option B: Auto-install via ADB**
 
-Mods are supported via the **External Storage** patch. When enabled, the game reads from and writes to the shared Documents folder, making it easier to manage mods on Android.
+1. Enable [USB Debugging](https://developer.android.com/studio/debug/dev-options) on your Android device.
+2. Connect your device to PC via USB.
+3. When the tool asks *"Would you like to automatically install balatro.apk?"*, answer **Y**.
+4. If a permission dialog appears on your phone, allow USB debugging.
 
-- **Mods Directory (Android):** `/storage/emulated/0/Documents/Balatro/game/save/Mods`
+### 3. Grant All-Files Access (Required)
+
+After installing the APK, you **must** grant all-files access so the game can read/write saves and mods in the shared Documents folder:
+
+1. Open **Settings → Apps → Special app access → All files access**.
+2. Find and tap **Balatro** in the list.
+3. Toggle **Allow access to manage all files** to ON.
+
+> The app will **not** auto-prompt for this permission. If skipped, saves and mods will not work.
+
+### 4. Install Steamodded (Required)
+
+**You MUST install [Steamodded](https://github.com/Steamodded/smods/)**. Without it, the game will likely crash or have severe rendering/input issues on Android.
+
+**Installation steps:**
+1. On your PC (or directly on Android), download the latest **Steamodded** release from [GitHub Releases](https://github.com/Steamodded/smods/releases).
+2. Extract the downloaded archive. You should get a folder like `smods-X.X.X`.
+3. Copy the **entire `smods` folder** (or individual mod files) to your Android device at:
+    ```
+    /storage/emulated/0/Documents/Balatro/game/save/Mods/
+    ```
+   - Use a file manager on Android, or
+   - Connect via USB and copy directly.
+4. Launch the game. If installed correctly, a mod loader screen should appear on startup.
+
+> See the [Steamodded Wiki](https://github.com/Steamodded/smods/wiki) for troubleshooting.
+
+### 5. (Optional) Transfer Saves
+
+If you want to continue your Steam progress on mobile (or vice versa):
+
+**Prerequisites:** Enable USB Debugging on your Android device and connect it to your PC.
+
+**Push saves (PC → Android):**
+
+- When the tool asks *"Would you like to transfer saves from your Steam copy?"*, answer **Y**.
+- The tool automatically creates a backup on Android before overwriting.
+
+**Pull saves (Android → PC):**
+
+- When asked *"Would you like to pull saves from your Android device?"*, answer **Y**.
+- The tool backs up your PC saves first, then pulls the Android saves into the Steam save folder.
+
+> Backups are created automatically before overwriting. Up to **10 dated backups** (`-backup-YYYYMMDD`) are kept on both PC and Android. Old backups are pruned automatically.
+
+## Mods & Save Support
+
+The **External Storage** patch is automatically applied. The game reads from and writes to `/storage/emulated/0/Documents/Balatro/game/save/`, making mods and save management easy on Android.
+
+- **Mods Directory:** `/storage/emulated/0/Documents/Balatro/game/save/Mods`
   - Place your mod files or `lovely` injector files here just like on PC.
-- **Backups:** The save transfer feature keeps up to **10 dated backups** (`-backup-YYYYMMDD`) on both your PC and Android device. Old backups are pruned automatically.
-- **Excluded Paths:** The following debug folders are excluded from sync to reduce backup size and transfer time:
-  - `save/Mods/lovely/log`
-  - `save/Mods/lovely/dump`
-  - `save/Mods/lovely/game-dump`
-
-> **Tip:** If you install the latest **[Steamodded](https://github.com/Steamodded/smods/)**, you generally do **not** need to apply most other Optional Patches (e.g., FPS Cap, Landscape, High DPI, CRT Disable), as Steamodded handles these settings automatically.
-
-### External Storage Setup (Android)
-
-After installing the APK, you must manually grant all-files access:
-
-1. Go to **Settings → Apps → Special app access → All files access → Balatro**.
-2. Grant **Allow access to manage all files**.
-   - The app will not automatically prompt for storage permissions. This is the only way to enable external storage without rewriting parts of the LOVE2D Android wrapper.
-3. Save files will automatically save to `/storage/emulated/0/Documents/Balatro`.
-   - This path is hardcoded in `Patching.cs`; you can try to change it if you want, but your mileage may vary.
+- **Recommended Mod:** [SilkTouch](https://github.com/HuyTheKiller/SilkTouch) — A popular quality-of-life mod for Balatro.
+- **Backups:** Up to **10 dated backups** (`-backup-YYYYMMDD`) are kept on both PC and Android. Old backups are pruned automatically.
+- **Excluded sync paths:** `Mods/lovely/log`, `Mods/lovely/dump`, `Mods/lovely/game-dump`
 
 ## Notes
 
@@ -62,15 +99,14 @@ After installing the APK, you must manually grant all-files access:
 - This script will automatically download [7-Zip](https://www.7-zip.org/).
 
 ### Android Dependencies
+
 - [OpenJDK](https://www.microsoft.com/openjdk)
 - [APK Tool](https://apktool.org/)
 - [uber-apk-signer](https://github.com/patrickfav/uber-apk-signer/)
-- [love-11.5-android-embed.apk](https://github.com/love2d/love-android/)
+- [love-android-embed.apk](https://github.com/SplitGemini/love-android/)
 - [Balatro-APK-Patch](https://github.com/SplitGemini/balatro-mobile-maker/releases/tag/Additional-Tools-1.0)
 - [Android Developer Bridge](https://developer.android.com/tools/adb) (optional, for auto-install / save transfer)
-
-### iOS Dependencies
-- [Balatro-IPA-Base](https://github.com/SplitGemini/balatro-mobile-maker/releases/tag/Additional-Tools-1.0)
+- [Lovely Injector (Android)](https://github.com/SplitGemini/lovely-android/)
 
 ## Recognition (in no particular order)
 

@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using System.IO;
 using System.Net;
@@ -76,16 +77,38 @@ internal class Tools
     {
         if (Directory.Exists(target))
         {
-            if (_verboseMode)
-                Log("Deleting \"" + target + "/\"...");
-            Directory.Delete(target, true);
+            Log("Deleting \"" + target + "/\"...");
+            for (int i = 0; i < 5; i++)
+            {
+                try
+                {
+                    Directory.Delete(target, true);
+                    break;
+                }
+                catch (IOException)
+                {
+                    if (i == 4) throw;
+                    Thread.Sleep(200);
+                }
+            }
         }
 
         if (File.Exists(target))
         {
-            if (_verboseMode)
-                Log("Deleting \"" + target + "\"...");
-            File.Delete(target);
+            Log("Deleting \"" + target + "\"...");
+            for (int i = 0; i < 5; i++)
+            {
+                try
+                {
+                    File.Delete(target);
+                    break;
+                }
+                catch (IOException)
+                {
+                    if (i == 4) throw;
+                    Thread.Sleep(200);
+                }
+            }
         }
     }
 
@@ -155,7 +178,7 @@ internal class Tools
     private static void ProcessOutputHandler(object sender, DataReceivedEventArgs e)
     {
         string data = e.Data;
-        if (_verboseMode && data != null && data != "")
+        if (data != null && data != "")
             try //I got System.InvalidOperationException here once. Seems to happen if ADB exits fatally
             {
                 Log("[" + ((System.Diagnostics.Process)sender).ProcessName + "]: " + data);
@@ -205,8 +228,6 @@ internal class Tools
             {
                 //Error occurred
                 Log("An unexpected error occurred!");
-                if (!_verboseMode)
-                    Log("Try running in verbose mode to determine the cause of the error.");
             }
             else
                 Log("\n");
@@ -343,15 +364,4 @@ internal class Tools
         return input == "y";
     }
 
-    public static void ModifyZip()
-    {
-        string existingZipFile = "balatro-base.zip";
-        string newFilePath = "game.love";
-        string arcname = "Payload/Balatro.app/game.love";
-
-        using (ZipArchive archive = System.IO.Compression.ZipFile.Open(existingZipFile, ZipArchiveMode.Update))
-        {
-            archive.CreateEntryFromFile(newFilePath, arcname);
-        }
-    }
 }

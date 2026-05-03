@@ -9,9 +9,8 @@ internal static class Constants
     //Extra tools download links
     public const string ApktoolLink = "https://github.com/iBotPeaches/Apktool/releases/download/v2.9.3/apktool_2.9.3.jar";
     public const string UberapktoolLink = "https://github.com/patrickfav/uber-apk-signer/releases/download/v1.3.0/uber-apk-signer-1.3.0.jar";
-    public const string BalatroApkPatchLink = "https://github.com/blake502/balatro-apk-maker/releases/download/Additional-Tools-1.0/Balatro-APK-Patch.zip";
-    public const string Love2dApkLink = "https://github.com/love2d/love-android/releases/download/11.5a/love-11.5-android-embed.apk";
-    public const string IosBaseLink = "https://github.com/blake502/balatro-apk-maker/releases/download/Additional-Tools-1.0/balatro-base.ipa";
+    public const string BalatroApkPatchLink = "https://github.com/SplitGemini/balatro-mobile-maker/releases/download/tools/Balatro-APK-Patch.zip";
+    public const string Love2dApkLink = "https://github.com/SplitGemini/love-android/releases/download/11.5a/app-embed-noRecord-release-unsigned.apk";
 
     //ADB
     public const string PlatformToolsLink = "https://dl.google.com/android/repository/platform-tools-latest-windows.zip";

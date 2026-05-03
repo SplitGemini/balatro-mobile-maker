@@ -21,7 +21,6 @@ internal class View
 {
 
     private bool _androidBuild;
-    private bool _iosBuild;
     private bool _addLovely;
     private string _androidPackageName = AndroidPackageName;
 
@@ -41,16 +40,13 @@ internal class View
 
         //Initial prompts
         _cleaup = AskQuestion("Would you like to automatically clean up once complete?");
-        _verboseMode = AskQuestion("Would you like to enable extra logging information?");
 
-        //If balatro.apk or balatro.ipa already exists, ask before beginning build process again
-        if (!(fileExists("balatro.apk") || fileExists("balatro.ipa")) || AskQuestion("A previous build was found... Would you like to build again?"))
+        //If balatro.apk already exists, ask before beginning build process again
+        if (!fileExists("balatro.apk") || AskQuestion("A previous build was found... Would you like to build again?"))
         {
-            _androidBuild = AskQuestion("Would you like to build for Android?");
-            if(_androidBuild)
-            {
-                _addLovely = AskQuestion("Would you like to add lovely injector?");
-                if (AskQuestion("Would you like to use a custom package name? (Default: " + AndroidPackageName + ")"))
+            _androidBuild = true;
+            _addLovely = true;
+            if (AskQuestion("Would you like to use a custom package name? (Default: " + AndroidPackageName + ")"))
                 {
                     Log("Enter custom package name (e.g. com.example.balatro):");
                     string customName = Console.ReadLine()?.Trim();
@@ -64,11 +60,8 @@ internal class View
                         Log("Invalid package name entered. Using default: " + AndroidPackageName);
                     }
                 }
-            }
-            _iosBuild = AskQuestion("Would you like to build for iOS (experimental)?");
 
-
-            if (_androidBuild || _iosBuild)
+            if (_androidBuild)
             {
                 #region Download tools
                 if (_androidBuild)
@@ -82,7 +75,7 @@ internal class View
                         new Thread(() => { TryDownloadFile("APKTool", ApktoolLink, "apktool.jar"); }),
                         new Thread(() => { TryDownloadFile("uber-apk-signer", UberapktoolLink, "uber-apk-signer.jar"); }),
                         new Thread(() => { TryDownloadFile("Balatro-APK-Patch", BalatroApkPatchLink, "Balatro-APK-Patch.zip"); }),
-                        new Thread(() => { TryDownloadFile("Love2D APK", Love2dApkLink, "love-11.5-android-embed.apk"); }),
+                        new Thread(() => { TryDownloadFile("Love2D APK", Love2dApkLink, "love-android-embed.apk"); }),
                         new Thread(() => { TryDownloadFile("Lovely Injector (Android)", LibLovelyAndroidLink, "lovely-aarch64-linux-android.tar.gz"); })
                     ];
 
@@ -95,22 +88,6 @@ internal class View
                     #endregion
                 }
 
-                if (_iosBuild)
-                {
-                    #region iOS Tools
-                    //Downloading tools. Handled in threads to allow simultaneous downloads
-                    Thread[] downloadThreads =
-                    [
-                        new Thread(() => { TryDownloadFile("iOS Base", IosBaseLink, "balatro-base.ipa"); })
-                    ];
-
-                    //Start all the downloads
-                    foreach (var t in downloadThreads) t.Start();
-
-                    //Wait for all the downloads to complete
-                    foreach (var t in downloadThreads) t.Join();
-                    #endregion
-                }
                 #endregion
 
                 #region Prepare workspace
@@ -166,7 +143,7 @@ internal class View
                     }
 
                     //Unpack Love2D APK
-                    useTool(ProcessTools.Java, "-jar -Xmx1G -Duser.language=en -Dfile.encoding=UTF8 -Djdk.util.zip.disableZip64ExtraFieldValidation=true -Djdk.nio.zipfs.allowDotZipEntry=true \"apktool.jar\" d -o balatro-apk love-11.5-android-embed.apk");
+                    useTool(ProcessTools.Java, "-jar -Xmx1G -Duser.language=en -Dfile.encoding=UTF8 -Djdk.util.zip.disableZip64ExtraFieldValidation=true -Djdk.nio.zipfs.allowDotZipEntry=true \"apktool.jar\" d -o balatro-apk love-android-embed.apk");
 
                     //Check for failure
                     if (!directoryExists("balatro-apk"))
@@ -256,14 +233,6 @@ internal class View
 
                 #endregion
 
-                if (_iosBuild)
-                {
-                    #region Prepare IPA
-                    Log("Preparing iOS Base...");
-                    fileMove("balatro-base.ipa", "balatro-base.zip");
-                    #endregion
-                }
-
                 #endregion
 
                 #region Patch
@@ -286,9 +255,6 @@ internal class View
                 Log("Moving archive...");
                 if (_androidBuild)
                     fileCopy("balatro.zip", "balatro-apk/assets/game.love");
-
-                if (_iosBuild)
-                    fileCopy("balatro.zip", "game.love");
                 #endregion
 
                 if (_androidBuild)
@@ -322,23 +288,13 @@ internal class View
                     #endregion
                 }
 
-                if (_iosBuild)
-                {
-                    #region Packing IPA
-                   
-                    Log("Repacking iOS app...");
-                    ModifyZip();
-
-                    fileMove("balatro-base.zip", "balatro.ipa");
-                    #endregion
-                }
                 Log("Build successful!");
                 #endregion
             }
         }
 
         //TODO: Implement for OSX and Linux!!!
-        if ((!_iosBuild || _androidBuild) && Platform.isWindows)
+        if (Platform.isWindows)
         {
             #region Android options
             #region Auto-install
@@ -460,9 +416,8 @@ internal class View
         {
             Log("Deleting temporary files...");
 
-            tryDelete("love-11.5-android-embed.apk");
-            tryDelete("Balatro-APK-Patch.zip");//TODO: remove when Android build changes
-            //tryDelete("AndroidManifest.xml");//TODO: enable when Android build changes
+            tryDelete("love-android-embed.apk");
+            tryDelete("Balatro-APK-Patch.zip");
             tryDelete("apktool.jar");
             tryDelete("uber-apk-signer.jar");
             tryDelete("openjdk.zip");
@@ -471,16 +426,13 @@ internal class View
             tryDelete("balatro-aligned-debugSigned.apk.idsig");
             tryDelete("balatro-unsigned.apk");
             tryDelete("platform-tools.zip");
-            tryDelete("ios.py");
             tryDelete("balatro.zip");
-            tryDelete("game.love");
             tryDelete("lovely-aarch64-linux-android.tar.gz");
             tryDelete("lovely-aarch64-linux-android");
 
             tryDelete("platform-tools");
             tryDelete("jdk-21.0.3+9");
-            tryDelete("Balatro-APK-Patch");//TODO: remove when Android build changes
-            //tryDelete("icons");//TODO: enable when Android build changes
+            tryDelete("Balatro-APK-Patch");
             tryDelete("Balatro");
             tryDelete("balatro-apk");
             if (!gameProvided)
