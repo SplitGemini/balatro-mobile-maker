@@ -17,8 +17,6 @@ Balatro Mobile Maker also supports automatically transferring your saves back an
 4. **Run** `balatro-mobile-maker` and follow the CLI prompts:
    - Choose whether to clean up temporary files after build.
    - Confirm Android build.
-   - Choose whether to inject `lovely` (recommended if you plan to use mods).
-   - Confirm external storage patch (auto-applied).
 5. Wait for the build to complete. The output is a signed **`balatro.apk`** in the same folder.
 
 > The External Storage patch is applied automatically. Saves and mods are stored in `/storage/emulated/0/Documents/Balatro/game/save/`.
@@ -46,13 +44,14 @@ After installing the APK, you **must** grant all-files access so the game can re
 2. Find and tap **Balatro** in the list.
 3. Toggle **Allow access to manage all files** to ON.
 
-> The app will **not** auto-prompt for this permission. If skipped, saves and mods will not work.
+> The app will **not** auto-prompt for this permission. If skipped, the app will not start.
 
 ### 4. Install Steamodded (Required)
 
 **You MUST install [Steamodded](https://github.com/Steamodded/smods/)**. Without it, the game will likely crash or have severe rendering/input issues on Android.
 
 **Installation steps:**
+
 1. On your PC (or directly on Android), download the latest **Steamodded** release from [GitHub Releases](https://github.com/Steamodded/smods/releases).
 2. Extract the downloaded archive. You should get a folder like `smods-X.X.X`.
 3. Copy the **entire `smods` folder** (or individual mod files) to your Android device at:
@@ -82,6 +81,15 @@ If you want to continue your Steam progress on mobile (or vice versa):
 - The tool backs up your PC saves first, then pulls the Android saves into the Steam save folder.
 
 > Backups are created automatically before overwriting. Up to **10 dated backups** (`-backup-YYYYMMDD`) are kept on both PC and Android. Old backups are pruned automatically.
+
+**Alternative: Continuous Sync**
+
+For seamless cross-device progress, you can set up continuous sync between your PC and Android save folders using tools like [Syncthing](https://syncthing.net/) or [FolderSync](https://play.google.com/store/apps/details?id=dk.tacit.android.foldersync.lite):
+
+- **PC path:** `%AppData%\Balatro\` (Windows)
+- **Android path:** `/storage/emulated/0/Documents/Balatro/game/save/`
+
+Configure both folders as a shared/synced pair. This way your progress stays in sync automatically without needing to manually push or pull.
 
 ## Mods & Save Support
 
