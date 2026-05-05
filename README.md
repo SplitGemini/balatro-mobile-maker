@@ -99,7 +99,7 @@ The **External Storage** patch is automatically applied. The game reads from and
 
 - **Mods Directory:** `/storage/emulated/0/Documents/Balatro/game/save/Mods`
   - Place your mod files or `lovely` injector files here just like on PC.
-- **Recommended Mod:** [SilkTouch](https://github.com/HuyTheKiller/SilkTouch) — A popular quality-of-life mod for Balatro.
+- **Recommended Mod:** [SilkTouch](https://github.com/SplitGemini/SilkTouch) — A Balatro mod that brings touch controls from mobile version to PC/Mac.
 - **Backups:** Up to **10 dated backups** (`-backup-YYYYMMDD`) are kept on both PC and Android. Old backups are pruned automatically.
 - **Excluded sync paths:** `Mods/lovely/log`, `Mods/lovely/dump`, `Mods/lovely/game-dump`
 
